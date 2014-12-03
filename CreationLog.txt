@@ -1,0 +1,4 @@
+
+Created on 2014-11-28 in 'D:\courses\Thesis\PracticalParts\ActRec/file.db/saeed .db' ,Used Query : CREATE TABLE stable(hi int , , )
+
+Created on 2014-11-28 in 'D:\courses\Thesis\PracticalParts\ActRec/file.db/saeed .db' ,Used Query : CREATE TABLE stable(hi int , , )
