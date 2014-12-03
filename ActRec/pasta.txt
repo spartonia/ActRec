@@ -1,0 +1,32 @@
+fluents: 
+heat_on 
+vessel_on_heat
+vessel_water_full  
+vessel_pasta_full 
+pasta_cooked
+vessel_sauce_full 
+pasta_sauce_mixed
+vessel_has_boiled_water 
+pasta_water_drained 	
+pasta_ready 
+
+actions: 
+
+vessel_water_boil
+pasta_boil
+pasta_cooked_drain
+pasta_sauce_add
+
+
+vessel_water_boil cause vessel_has_boiled_water if vessel_water_full, heat_on, vessel_on_heat. 
+
+pasta_boil cause pasta_cooked if heat_on, vessel_on_heat, vessel_has_boiled_water, vessel_pasta_full. 
+
+pasta_cooked_drain cause pasta_water_drained if pasta_cooked.
+
+pasta_sauce_add cause pasta_sauce_mixed if pasta_cooked, vessel_sauce_full, vessel_pasta_full, heat_on, vessel_on_heat
+
+pasta_ready if pasta_sauce_mixed 
+
+
+
