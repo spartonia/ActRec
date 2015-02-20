@@ -64,11 +64,11 @@ def check_solution_status(answerSet):
     #             break
     # return status
          
-def get_answers(): 
+def get_answers(session): 
     """Return answer sets from an ASP, one at a time, along with corresponding answer id."""
     
     # Creata ASP program and feed it to ASP-solver
-    ASPScript = make_asp_script()
+    ASPScript = make_asp_script(session)
     tmp = tempfile.NamedTemporaryFile( delete=False) #mode='w+b',
     tmp.write(ASPScript)
     tmp.seek(0)

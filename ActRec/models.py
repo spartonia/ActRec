@@ -1,6 +1,6 @@
 # import sqlalchemy 
 from sqlalchemy import create_engine 
-from sqlalchemy import Column, ForeignKey, Integer, String, PickleType
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, PickleType
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base  
 from sqlalchemy.orm import relationship 
@@ -60,7 +60,7 @@ class DefaultRule(Base):
 	__tablename__ = "default_rule"
 	id = Column(Integer, primary_key=True)
 	fluent = Column(String(250), nullable=False)
-	# value = Column(Boolean(), nullable=True)
+	value = Column(Boolean(), nullable=False)
 	__table_args__ = (UniqueConstraint('fluent', name='_default_rule_uc'),
 		)
 class FluentObservation(Base): 
@@ -78,12 +78,14 @@ class ActionQuery(Base):
 	time = Column(Integer, nullable=False)
 	__table_args__ = (UniqueConstraint('action', 'time', name='_action_time_uc'),
 		)
-
-engine = create_engine('sqlite:///models.db')
-Base.metadata.create_all(engine, checkfirst=True) # , checkfirst=True
+def create_db(dbName): 
+	db = 'sqlite:///' + dbName
+	engine = create_engine(db)
+	Base.metadata.create_all(engine, checkfirst=True) # , checkfirst=True
 
 
 if __name__ == "__main__":
+	create_db('models.db')
 	print "Database model created!"	
 
 

@@ -149,8 +149,8 @@ def activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=Fals
 		print "and terminated at state {}.".format(finalState)
 		return RECOGNIZED
 
-def actRec(initState=[], finalState=[], actionList=[]): 
-	# if not initState and not finalState:
+def actRec(session, initState=[], finalState=[], actionList=[],  printTrajectory=True, printAllStates=True, printAllActions=True): 
+	session = session
 	cnt_recognized = 0
  	cnt_uncomplete = 0
  	cnt_notrecognized = 0 
@@ -160,16 +160,16 @@ def actRec(initState=[], finalState=[], actionList=[]):
  		for i, j in actionList.iteritems(): 
  			print i, j
 
- 	for i, answerSet in get_answers():
+ 	for i, answerSet in get_answers(session):
  		print "Recognizing activity for answer:", i
- 		status = activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=True, printAllStates=True)
+ 		status = activity_recog_by_fluents(answerSet, initState, finalState, printTrajectory, printAllStates)
  		if status == RECOGNIZED: 
  			cnt_recognized += 1
  		elif status == NOTRECOGNIZED: 
  			cnt_notrecognized += 1
  		else: 
  			cnt_uncomplete += 1 
- 		status = activity_recog_by_actions(answerSet, actionList, printTrajectory=True, printAllActions=True)
+ 		status = activity_recog_by_actions(answerSet, actionList, printTrajectory, printAllActions)
  		if status == RECOGNIZED: 
  			cnt_recognized_by_action_list += 1 
  		else:
@@ -188,31 +188,30 @@ def actRec(initState=[], finalState=[], actionList=[]):
 
 if __name__ == "__main__": 
 
-	string = """fluent(coffe_m_is_on) fluent(coffe_m_has_powder) fluent(coffe_m_has_old_coffe_powder) fluent(coffe_m_has_water) fluent(coffe_m_is_jug_removed) action(coffe_m_activate) action(coffe_m_add_coffe_powder) action(coffe_m_remove_coffe_powder) action(coffe_m_add_water) action(coffe_m_add_jug) action(coffe_m_remove_jug) holds(occurs(coffe_m_add_coffe_powder),2) time(0) time(1) time(2) time(3) time(4) time(5) holds(coffe_m_has_old_coffe_powder,0) holds(coffe_m_has_old_coffe_powder,1) holds(coffe_m_has_old_coffe_powder,2) holds(coffe_m_has_old_coffe_powder,3) holds(coffe_m_has_old_coffe_powder,4) holds(coffe_m_has_old_coffe_powder,5) holds(coffe_m_is_on,0) holds(coffe_m_is_on,1) holds(coffe_m_is_on,2) holds(coffe_m_is_on,3) holds(coffe_m_is_on,4) holds(coffe_m_is_on,5) holds(allow(occurs(coffe_m_remove_coffe_powder)),0) holds(allow(occurs(coffe_m_remove_coffe_powder)),1) holds(allow(occurs(coffe_m_remove_coffe_powder)),2) holds(allow(occurs(coffe_m_remove_coffe_powder)),3) holds(allow(occurs(coffe_m_remove_coffe_powder)),4) holds(allow(occurs(coffe_m_remove_coffe_powder)),5) holds(ab(occurs(coffe_m_remove_coffe_powder)),0) holds(ab(occurs(coffe_m_remove_coffe_powder)),1) holds(ab(occurs(coffe_m_remove_coffe_powder)),2) holds(ab(occurs(coffe_m_remove_coffe_powder)),3) holds(ab(occurs(coffe_m_remove_coffe_powder)),4) holds(ab(occurs(coffe_m_remove_coffe_powder)),5) holds(neg(occurs(coffe_m_remove_coffe_powder)),0) holds(neg(occurs(coffe_m_remove_coffe_powder)),1) holds(neg(occurs(coffe_m_remove_coffe_powder)),2) holds(neg(occurs(coffe_m_remove_coffe_powder)),3) holds(neg(occurs(coffe_m_remove_coffe_powder)),4) holds(neg(coffe_m_has_powder),0) holds(neg(coffe_m_has_powder),1) holds(neg(coffe_m_has_powder),2) holds(neg(coffe_m_has_powder),3) holds(neg(coffe_m_has_powder),4) holds(neg(coffe_m_has_powder),5) holds(coffe_m_has_water,0) holds(coffe_m_has_water,1) holds(coffe_m_has_water,2) holds(coffe_m_has_water,3) holds(coffe_m_has_water,4) holds(coffe_m_has_water,5) holds(coffe_m_is_jug_removed,0) holds(allow(occurs(coffe_m_activate)),0) holds(allow(occurs(coffe_m_activate)),1) holds(allow(occurs(coffe_m_activate)),2) holds(allow(occurs(coffe_m_activate)),3) holds(allow(occurs(coffe_m_activate)),4) holds(allow(occurs(coffe_m_activate)),5) holds(allow(occurs(coffe_m_add_wate)),0) holds(allow(occurs(coffe_m_add_water)),1) holds(allow(occurs(coffe_m_add_water)),2) holds(allow(occurs(coffe_m_add_water)),3) holds(allow(occurs(coffe_m_add_water)),4) holds(allow(occurs(coffe_m_add_water)),5) holds(allow(occurs(coffe_m_remove_jug)),0) holds(allow(occurs(coffe_m_remove_jug)),1) holds(allow(occurs(coffe_m_remove_jug)),2) holds(allow(occurs(coffe_m_remove_jug)),3) holds(allow(occurs(coffe_m_remove_jug)),4) holds(allow(occurs(coffe_m_remove_jug)),5) holds(allow(occurs(coffe_m_add_jug)),0) holds(allow(occurs(coffe_m_add_jug)),1) holds(allow(occurs(coffe_m_add_jug)),2) holds(allow(occurs(coffe_m_add_jug)),3) holds(allow(occurs(coffe_m_add_jug)),4) holds(allow(occurs(coffe_m_add_jug)),5) holds(allow(occurs(coffe_m_add_coffe_powder)),0) holds(allow(occurs(coffe_m_add_coffe_powder)),1) holds(allow(occurs(coffe_m_add_coffe_powder)),2) holds(allow(occurs(coffe_m_add_coffe_powder)),3) holds(allow(occurs(coffe_m_add_coffe_powder)),4) holds(allow(occurs(coffe_m_add_coffe_powder)),5) holds(occurs(coffe_m_add_jug),0) holds(occurs(coffe_m_add_jug),1) holds(occurs(coffe_m_add_jug),2) holds(occurs(coffe_m_add_jug),3) holds(occurs(coffe_m_add_jug),4) holds(occurs(coffe_m_activate),0) holds(occurs(coffe_m_activate),1) holds(occurs(coffe_m_activate),2) holds(occurs(coffe_m_activate),3) holds(occurs(coffe_m_activate),4) holds(occurs(coffe_m_activate),5) holds(occurs(coffe_m_add_coffe_powder),0) holds(occurs(coffe_m_add_coffe_powder),1) holds(occurs(coffe_m_add_coffe_powder),3) holds(occurs(coffe_m_add_coffe_powder),4) holds(occurs(coffe_m_add_waterrrrrrr),0) holds(occurs(coffe_m_add_water),1) holds(occurs(coffe_m_add_water),2) holds(occurs(coffe_m_add_water),3) holds(occurs(coffe_m_add_water),4) holds(occurs(coffe_m_remove_jug),0) holds(occurs(coffe_m_remove_jug),1) holds(occurs(coffe_m_remove_jug),2) holds(occurs(coffe_m_remove_jug),3) holds(occurs(coffe_m_remove_jug),4)
- 	"""
- 	string2 = """fluent(coffe_m_is_on) fluent(coffe_m_has_powder) fluent(coffe_m_has_old_coffe_powder) fluent(coffe_m_has_water) fluent(coffe_m_is_jug_removed) action(coffe_m_activate) action(coffe_m_add_coffe_powder) action(coffe_m_remove_coffe_powder) action(coffe_m_add_water) action(coffe_m_add_jug) action(coffe_m_remove_jug) holds(occurs(coffe_m_add_coffe_powder),2) time(0) time(1) time(2) time(3) time(4) time(5) holds(coffe_m_has_old_coffe_powder,0) holds(coffe_m_has_old_coffe_powder,1) holds(coffe_m_has_old_coffe_powder,2) holds(coffe_m_has_old_coffe_powder,3) holds(coffe_m_has_old_coffe_powder,4) holds(coffe_m_has_old_coffe_powder,5) holds(coffe_m_is_on,0) holds(coffe_m_is_on,1) holds(coffe_m_is_on,2) holds(coffe_m_is_on,3) holds(coffe_m_is_on,4) holds(coffe_m_is_on,5) holds(allow(occurs(coffe_m_remove_coffe_powder)),0) holds(allow(occurs(coffe_m_remove_coffe_powder)),1) holds(allow(occurs(coffe_m_remove_coffe_powder)),2) holds(allow(occurs(coffe_m_remove_coffe_powder)),3) holds(allow(occurs(coffe_m_remove_coffe_powder)),4) holds(allow(occurs(coffe_m_remove_coffe_powder)),5) holds(ab(occurs(coffe_m_remove_coffe_powder)),0) holds(ab(occurs(coffe_m_remove_coffe_powder)),1) holds(ab(occurs(coffe_m_remove_coffe_powder)),2) holds(ab(occurs(coffe_m_remove_coffe_powder)),3) holds(ab(occurs(coffe_m_remove_coffe_powder)),4) holds(ab(occurs(coffe_m_remove_coffe_powder)),5) holds(neg(occurs(coffe_m_remove_coffe_powder)),0) holds(neg(occurs(coffe_m_remove_coffe_powder)),1) holds(neg(occurs(coffe_m_remove_coffe_powder)),2) holds(neg(occurs(coffe_m_remove_coffe_powder)),3) holds(neg(occurs(coffe_m_remove_coffe_powder)),4) holds(neg(coffe_m_has_powder),0) holds(neg(coffe_m_has_powder),1) holds(neg(coffe_m_has_powder),2) holds(neg(coffe_m_has_powder),3) holds(neg(coffe_m_has_powder),4) holds(neg(coffe_m_has_powder),5) holds(coffe_m_has_water,0) holds(coffe_m_has_water,1) holds(coffe_m_has_water,2) holds(coffe_m_has_water,3) holds(coffe_m_has_water,4) holds(coffe_m_has_water,5) holds(coffe_m_is_jug_removed,0) holds(allow(occurs(coffe_m_activate)),0) holds(allow(occurs(coffe_m_activate)),1) holds(allow(occurs(coffe_m_activate)),2) holds(allow(occurs(coffe_m_activate)),3) holds(allow(occurs(coffe_m_activate)),4) holds(allow(occurs(coffe_m_activate)),5) holds(allow(occurs(coffe_m_add_water)),0) holds(allow(occurs(coffe_m_add_water)),1) holds(allow(occurs(coffe_m_add_water)),2) holds(allow(occurs(coffe_m_add_water)),3) holds(allow(occurs(coffe_m_add_water)),4) holds(allow(occurs(coffe_m_add_water)),5) holds(allow(occurs(coffe_m_remove_jug)),0) holds(allow(occurs(coffe_m_remove_jug)),1) holds(allow(occurs(coffe_m_remove_jug)),2) holds(allow(occurs(coffe_m_remove_jug)),3) holds(allow(occurs(coffe_m_remove_jug)),4) holds(allow(occurs(coffe_m_remove_jug)),5) holds(allow(occurs(coffe_m_add_jug)),0) holds(allow(occurs(coffe_m_add_jug)),1) holds(allow(occurs(coffe_m_add_jug)),2) holds(allow(occurs(coffe_m_add_jug)),3) holds(allow(occurs(coffe_m_add_jug)),4) holds(allow(occurs(coffe_m_add_jug)),5) holds(allow(occurs(coffe_m_add_coffe_powder)),0) holds(allow(occurs(coffe_m_add_coffe_powder)),1) holds(allow(occurs(coffe_m_add_coffe_powder)),2) holds(allow(occurs(coffe_m_add_coffe_powder)),3) holds(allow(occurs(coffe_m_add_coffe_powder)),4) holds(allow(occurs(coffe_m_add_coffe_powder)),5) holds(occurs(coffe_m_add_jug),0) holds(occurs(coffe_m_add_jug),1) holds(neg(occurs(coffe_m_add_jug)),2) holds(occurs(coffe_m_add_jug),3) holds(occurs(coffe_m_add_jug),4) holds(occurs(coffe_m_activate),0) holds(occurs(coffe_m_activate),1) holds(occurs(coffe_m_activate),2) holds(occurs(coffe_m_activate),3) holds(occurs(coffe_m_activate),4) holds(occurs(coffe_m_activate),5) holds(occurs(coffe_m_add_coffe_powder),0) holds(occurs(coffe_m_add_coffe_powder),1) holds(occurs(coffe_m_add_coffe_powder),3) holds(occurs(coffe_m_add_coffe_powder),4) holds(occurs(coffe_m_add_water),0) holds(occurs(coffe_m_add_water),1) holds(occurs(coffe_m_add_water),2) holds(occurs(coffe_m_add_water),3) holds(occurs(coffe_m_add_water),4) holds(occurs(coffe_m_remove_jug),0) holds(occurs(coffe_m_remove_jug),1) holds(occurs(coffe_m_remove_jug),2) holds(occurs(coffe_m_remove_jug),3) holds(occurs(coffe_m_remove_jug),4)
- 	"""
+	
+ 	# inint state: [neg(coffe_m_is_on), coffe_m_has_powder, coffe_m_has_water]
+	# final state: [neg(coffe_m_is_jug_removed), coffe_m_has_old_coffe_powder ]
 
-
- 	# actionList = { 0: set(['coffe_m_add_water']), 
- 	# 				2 : set(['coffe_m_remove_jug']), 
- 	# 				1 : set(['coffe_m_add_jug']), 
- 	# 				3 : set(['coffe_m_activate'])}#, 
- 					# 4 : set(['coffe_m_add_coffe_powder']), 
- 					# 5 : set(['coffe_m_activate'])}
+	initSet = set([ 'coffe_m_has_powder', 'coffe_m_has_water'])
+ 	finalSet = set(['neg(coffe_m_is_jug_removed)', 'coffe_m_has_old_coffe_powder' ])
  	
+ 	actionList = { 0: set(['coffe_m_add_water']), 
+ 					2 : set(['coffe_m_remove_jug']), 
+ 					1 : set(['coffe_m_add_jug']), 
+ 					3 : set(['coffe_m_activate']), 
+ 					4 : set(['coffe_m_add_coffe_powder']), 
+ 					5 : set(['coffe_m_activate'])}
  	
+ 	actRec(initSet, finalSet, actionList)
 
  	############################################################
- 	# initSet = set(['neg(coffe_m_has_powder)', 'coffe_m_is_jug_removed'])
- 	# finalSet = set(['coffe_m_is_on', 'neg(coffe_m_has_powder)'])
- 	initSet = set(['heat_on', 'vessel_on_heat', 'vessel_water_full'])
- 	finalSet = set(['pasta_ready'])
+ 	# initSet = set(['heat_on', 'vessel_on_heat', 'vessel_water_full', 'neg(pasta_cooked)', 'neg(vessel_pasta_full)']) #
+ 	# finalSet = set(['pasta_ready']) #, 'neg(heat_on)', 'neg(vessel_water_full)', 'neg(vessel_has_boiled_water)'
 
- 	actionList = { 0: set(['vessel_water_boil']), 
- 					2 : set(['pasta_boil']), 
- 					1 : set(['pasta_cooked_drain']), 
- 					3 : set(['pasta_sauce_add'])}
+ 	# actionList = { 0: set(['vessel_water_boil']), 
+ 	# 				2 : set(['pasta_boil']), 
+ 	# 				1 : set(['pasta_cooked_drain']), 
+ 	# 				3 : set(['pasta_sauce_add'])}
  					
- 	actRec(initSet, finalSet, actionList)
+ 	# actRec(initSet, finalSet, actionList)
  	############################################################
