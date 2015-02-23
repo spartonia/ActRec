@@ -18,7 +18,7 @@ import gettext
 import sys 
 from wx.lib.mixins.listctrl import CheckListCtrlMixin, ListCtrlAutoWidthMixin
 
-import ActRec/controller as controller 
+import controller as controller 
 from actrec import actRec 
 from models import create_db 
 
