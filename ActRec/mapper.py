@@ -55,17 +55,22 @@ def prep_pair_rule(session):
 def prep_default_fluent(session):
 	"""For flunets with default value. """
 	res_str = """"""
-	constraint = "holds({fluent}, {time}):- not holds(neg({fluent}), {time}), default({fluent}), fluent({fluent}), time({time}).\n"
-	default_f = "default({fluent}).\n"
+	constraint_p = "holds({fluent}, {time}):- not holds(neg({fluent}), {time}), default({fluent}), fluent({fluent}), time({time}).\n"
+	default_f_p = "default({fluent}).\n"
+	constraint_n = "holds(neg({fluent}), {time}):- not holds({fluent}, {time}), default(neg({fluent})), fluent({fluent}), time({time}).\n"
+	default_f_n = "default(neg({fluent})).\n"
 	session = session 
-	
 	for rule in session.query(DefaultRule).all():
 		if rule.value:
-			res_str += constraint.format(fluent=get_fluent(rule.fluent), time='T')
-			res_str += default_f.format(fluent=get_fluent(rule.fluent)) 
-		# else: # value == False 
-			# ? 
+			constraint, default_f = constraint_p, default_f_p
+		else:
+			constraint, default_f = constraint_n, default_f_n
+
+		res_str += constraint.format(fluent=get_fluent(rule.fluent), time='T')
+		res_str += default_f.format(fluent=get_fluent(rule.fluent)) 
+			 
 	return res_str
+
 # 6. using grounder.
 def prep_non_default_fluent(session): 
 	"""For fluents without default values (innertial)."""
@@ -94,9 +99,10 @@ def prep_static_rule(session):
 	eff = []
 	pre = [] 
 	session = session
-	for srule in session.query(CausalRule).filter(CausalRule.action != None).all(): 
+	for srule in session.query(CausalRule).filter(CausalRule.action == None).all(): 
 		eff = pickle.loads(srule.effect)
 		pre = pickle.loads(srule.precond)
+
 		current = ""
 		for fluent in eff: 
 
@@ -269,7 +275,7 @@ def prep_action_query(session):
 			format(a=rule.action, t=rule.time)
 	return res_str1 + res_str2
 	
-def make_asp_script(session, max_time=5): 
+def make_asp_script(session, max_time=400): 
 	"""Returns final mapped script in ASP format."""
 	final_script = ""
 	max_time = max_time
@@ -284,37 +290,39 @@ def make_asp_script(session, max_time=5):
 	final_script += "\n%pair rule constraint\n"
 	final_script += prep_pair_rule(session)
 	 # default fluent test again.
+	final_script += prep_default_fluent(session)
 	final_script += "\n%default fluent constraint\n"
 	final_script += prep_non_default_fluent(session)
 	final_script += "\n%static causal rule\n"
 	final_script += prep_static_rule(session)
 	final_script += "\n%dynamic causal rule\n"
 	final_script += prep_dynamic_rule(session)
-	# final_script += "\n%allowance rule\n"
-	# final_script += prep_allowance_rule(session) 
-	# final_script += "\n%exogenous actions\n"
-	# final_script += prep_exogenous_rule(session)
-	# final_script += "\n%exogenous or allowed actions \n"
-	# final_script += prep_exogenous_allowed_rule(session, max_time)
-	# final_script += "\n%trigger rule\n"
-	# final_script += prep_trigger_rule(session)
-	# final_script += "\n%inhibition rule\n"
-	# final_script += prep_inhibition_rule(session)
-	# final_script += "\n%non concurrency rule\n"
-	# # final_script += prep_nonconcurrency_rule(session)
-	# final_script += "\n%fluent observation\n"
-	# final_script += prep_fluent_observation(session)
-	# final_script += "\n%action query\n"
-	# final_script += prep_action_query(session)
+	final_script += "\n%allowance rule\n"
+	final_script += prep_allowance_rule(session) 
+	final_script += "\n%exogenous actions\n"
+	final_script += prep_exogenous_rule(session)
+	final_script += "\n%exogenous or allowed actions \n"
+	final_script += prep_exogenous_allowed_rule(session, max_time)
+	final_script += "\n%trigger rule\n"
+	final_script += prep_trigger_rule(session)
+	final_script += "\n%inhibition rule\n"
+	final_script += prep_inhibition_rule(session)
+	final_script += "\n%non concurrency rule\n"
+	final_script += prep_nonconcurrency_rule(session)
+	final_script += "\n%fluent observation\n"
+	final_script += prep_fluent_observation(session)
+	final_script += "\n%action query\n"
+	final_script += prep_action_query(session)
 
 	return final_script 
 
 
 if __name__ == "__main__": 
-	DBSession = connect('models.db')
+	DBSession = connect('kitchen3.db')
 	session = DBSession()
-	# print make_asp_script(session)
-	prep_default_fluent(session)
+	print make_asp_script(session)
+	# print prep_static_rule(session)
+	
 
 	
 

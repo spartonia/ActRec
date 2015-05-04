@@ -44,7 +44,7 @@ ID_INHIBIT_RULE = 405
 ID_NONCONC_RULE = 406 
 ID_DEFAULT_RULE = 407 
 ID_OBSERVATION = 408 
-ID_ACTQUERY = 409 
+ID_ACTION_OBSERVATION = 409 
 
 
 ID_ACTIVITY = 501 
@@ -97,7 +97,7 @@ class MyFrame(wx.Frame):
         wxglade_tmp_menu_sub.Append(ID_NONCONC_RULE, _("Non-Concurrency Rule"), "", wx.ITEM_NORMAL)
         wxglade_tmp_menu_sub.Append(ID_DEFAULT_RULE, _("Default Rule"), "", wx.ITEM_NORMAL)
         wxglade_tmp_menu_sub.Append(ID_OBSERVATION, _("Observation"), "", wx.ITEM_NORMAL)
-        wxglade_tmp_menu_sub.Append(ID_ACTQUERY, _("Action Query"), "", wx.ITEM_NORMAL)
+        wxglade_tmp_menu_sub.Append(ID_ACTION_OBSERVATION, _("Action Observation"), "", wx.ITEM_NORMAL)
         wxglade_tmp_menu.AppendMenu(wx.ID_ANY, _("Add New"), wxglade_tmp_menu_sub, "")
         self.ActRec_menubar.Append(wxglade_tmp_menu, _("Rule"))
         wxglade_tmp_menu = wx.Menu()
@@ -119,7 +119,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.add_nonconc_diag, id=ID_NONCONC_RULE)
         self.Bind(wx.EVT_MENU, self.add_default_diag, id=ID_DEFAULT_RULE)
         self.Bind(wx.EVT_MENU, self.add_observation_diag, id=ID_OBSERVATION)
-        self.Bind(wx.EVT_MENU, self.add_act_query_diag, id=ID_ACTQUERY)
+        self.Bind(wx.EVT_MENU, self.add_act_observation_diag, id=ID_ACTION_OBSERVATION)
 
         self.Bind(wx.EVT_MENU, self.Activity_diag, id=ID_ACTIVITY)
         # end wxGlade
@@ -205,25 +205,25 @@ class MyFrame(wx.Frame):
         adds.ShowModal() 
         adds.Destroy() 
         
-    def add_act_query_diag(self, event):  # wxGlade: MyFrame.<event_handler>
-        adds = ActionQueryDiag(None)
+    def add_act_observation_diag(self, event):  # wxGlade: MyFrame.<event_handler>
+        adds = ActionObservationDiag(None)
         adds.ShowModal() 
         adds.Destroy() 
 
 # end of class MyFrame
 ####################################
 
-class ActionQueryDiag(wx.Dialog):
+class ActionObservationDiag(wx.Dialog):
     def __init__(self, *args, **kwds):
         session = DBSession() 
-        # begin wxGlade: ActionQueryDiag.__init__
+        # begin wxGlade: ActionObservationDiag.__init__
         kwds["style"] = wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
         self.combo_box_2 = wx.ComboBox(self, wx.ID_ANY, choices=actionChoices(session), style=wx.CB_DROPDOWN)
         self.sizer_3_staticbox = wx.StaticBox(self, wx.ID_ANY, _("Action"))
         self.spin_ctrl_1 = wx.SpinCtrl(self, wx.ID_ANY, "0", min=0, max=100)
         self.sizer_4_staticbox = wx.StaticBox(self, wx.ID_ANY, _("Time"))
-        self.sizer_6_copy_staticbox = wx.StaticBox(self, wx.ID_ANY, _("Action Query"))
+        self.sizer_6_copy_staticbox = wx.StaticBox(self, wx.ID_ANY, _("Action Observation"))
         self.button_3 = wx.Button(self, wx.ID_ANY, _("Add"))
         self.button_4 = wx.Button(self, wx.ID_ANY, _("Cancel"))
 
@@ -235,13 +235,13 @@ class ActionQueryDiag(wx.Dialog):
         # end wxGlade
 
     def __set_properties(self):
-        # begin wxGlade: ActionQueryDiag.__set_properties
-        self.SetTitle(_("Action Query"))
+        # begin wxGlade: ActionObservationDiag.__set_properties
+        self.SetTitle(_("Action Observation"))
         self.SetSize((500, 250))
         # end wxGlade
 
     def __do_layout(self):
-        # begin wxGlade: ActionQueryDiag.__do_layout
+        # begin wxGlade: ActionObservationDiag.__do_layout
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         grid_sizer_1 = wx.GridSizer(1, 3, 0, 0)
         self.sizer_6_copy_staticbox.Lower()
@@ -267,7 +267,7 @@ class ActionQueryDiag(wx.Dialog):
         action = self.combo_box_2.GetValue()
         at_time = self.spin_ctrl_1.GetValue()
         print action, at_time 
-        controller.add_action_query(session, action, at_time)
+        controller.add_action_observation(session, action, at_time)
 
     def close_diag(self, event):  # wxGlade: ObservationDiag.<event_handler>
         self.Close(True)
@@ -409,7 +409,6 @@ class DefaultRuleDiag(wx.Dialog):
                 controller.add_default_rule(session, ef, False)
             else: 
                 controller.add_default_rule(session, ef, True)
-            print ef, "Added, value:", fval
         self.precond_list_ctrl.DeleteAllItems()
 
     def clear_lists(self, event):  # wxGlade: DefaultRuleDiag.<event_handler>
@@ -1314,7 +1313,7 @@ class ActivityDiag(wx.Dialog):
         # print final 
         #  ++ call activity recog algo
         session = DBSession()
-        actRec(session, initState=set(init), finalState=set(final), actionList=actionList)
+        actRec(session, initState=set(init), finalState=set(final), actionList=actionList, method='by_action', verbose=True)
 
         # clear ctrl lists: 
         self.activity_action_list_ctrl.DeleteAllItems() 

@@ -1,6 +1,7 @@
 from __future__ import division 
 from asp_parser import * 
 import collections 
+from controller import add_action_observation_from_file, add_action 
 
 RECOGNIZED = 1
 UNCOMPLETE = 0 
@@ -11,7 +12,6 @@ def make_fluent_world(answerSet):
     states = {}
      
     for state, fluent in get_answerset_fluents(answerSet): 
-        # fset.add(fluent)
         try:
             states[state]
         except KeyError, e:
@@ -20,7 +20,7 @@ def make_fluent_world(answerSet):
     for state, setOfFluents in states.iteritems():
         yield state, setOfFluents
 
-def make_action_world(answerSet): 
+def make_action_world(answerSet, verbose=False): 
     """Creates a world from the answer set, representing all states and actions which hold in those states."""
     states = {} 
     for state, action in get_answerset_actions(answerSet):
@@ -29,68 +29,84 @@ def make_action_world(answerSet):
         except KeyError, e:
             states[state] = set() 
         states[state].add(action)
-    for state, setOfActions in states.iteritems(): 
-    	print state, setOfActions
+    for state, setOfActions in states.iteritems():
+    	if verbose: 
+	    	print 'state ', state, ":", [a for a in setOfActions]
         yield state, setOfActions
 
-def activity_recog_by_actions(answerSet, actionList, printTrajectory=False, printAllActions=False):
+def activity_recog_by_actions(answerSet, actionList, verbose = False, ordered=True):
 	"""Recognize activty by checking whether a sequence of actions performed."""
 
 	states = {}
-	for state, actionSet in make_action_world(answerSet):
+	for state, actionSet in make_action_world(answerSet, verbose=verbose):
 		states[state] = actionSet
+
 	states = collections.OrderedDict(sorted(states.items()))
-	actionList = collections.OrderedDict(sorted(actionList.items()))
 	if (not actionList) or (not states): return NOTRECOGNIZED # NO action list privided 
-	if printAllActions:
-		print "All actions (World): "
+	
+	if verbose:
+		print "\nActions in each state: "
 		for state, actionSet in states.iteritems(): 
-			print 'State ', state, ' : ', actionSet
-		print '*' * 60
+			print 'State ', state, ' : ', [i for i in actionSet]
 		print 
+		print "Act list: \n", actionList
+		print 
+
+	if len(actionList) > len(states): 
+		print "Intended activity (Action list) is longer that the world!"
+		print "\t|--> activity length='{0}', world length='{1}'."\
+				.format(len(actionList), len(states))
+		print 'NOTRECOGNIZED'
+		return NOTRECOGNIZED
+
+	if not ordered:
+		# A-activity type recognition (un-ordered)
+		worldActions = set()
+		for i in states.values() :
+			worldActions = worldActions.union(i)
+		if set(actionList).issubset(worldActions): 
+			print "RECOGNIZED"
+			return RECOGNIZED
+		print "NOTRECOGNIZED"
+		return NOTRECOGNIZED
+
+	# O-activity (ordered activity) type recognition
 	startState = None
 	prevState = None 
-	for action_no, action in actionList.iteritems(): 
-		# print action_no, action 
+	for action_no, action in enumerate(actionList): 
 		for state, actionSet in states.iteritems(): 
-			# print startState, 'startState'
 			if startState == None: 
-				if action.issubset(actionSet):
+				if set([action]).issubset(actionSet):
 					startState = state
 					prevState = state
-					if printTrajectory: 
-						print "action" , action_no, action
-						print "is subset of (init state):", state, actionSet
-					# print 'Start State:', startState
+					if verbose: 
+						print "Activity started at state {0}.\n".format(startState)
 					break
 				else:
 					continue
 			if startState != None and state <= prevState: 
 				continue
-			
-			if action.issubset(actionSet):
+			if set([action]).issubset(set(actionSet)):
 				prevState = state
-				if printTrajectory: 
-					print "action ", action_no, action
-					print "is subset of ", state, actionSet
-				break 
+				if action_no == len(actionList) -1: 
+					# last one in the action list 
+					if verbose: 
+						print "..and finished at state '{0}'.".\
+						format(prevState) 
+						print "RECOGNIZED"
+					return RECOGNIZED
+				else:
+					break 
 			else:
-				if printTrajectory: 
-					print "action ", action_no, action
-					print "is not a subset of ", state, actionSet
-					print "NOTRECOGNIZED"
-				return NOTRECOGNIZED # activity not found 
-
-			# print action_no, state
-	# print len(actionList), prevState, startState
-	if printTrajectory: 
-		print "RECOGNIZED"
-		print "Activity started at state '{0}' and finished at state '{1}'.".\
-		format(startState, startState) # +len(actionList)-1
-	return RECOGNIZED
+				continue
+	if startState: 
+		print "UNCOMPLETE"
+		return UNCOMPLETE
+	print "NOTRECOGNIZED"
+	return NOTRECOGNIZED
 
 
-def activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=False, printAllStates=False): 
+def activity_recog_by_fluents(answerSet, initSet, finalSet, verbose=False): 
 	""" Recognize activty by checking whether Initial and final state conditions are met."""
 	# what if initSet and final sets are empty? 
 	states = {} 
@@ -98,7 +114,7 @@ def activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=Fals
 		states[state] = fluentSet
 	# sort states 
 	states = collections.OrderedDict(sorted(states.items()))
- 	if printAllStates:
+ 	if verbose:
  		print "All States: "
  		for state, fluentSet in states.iteritems():
  			print "State ", state, ' : ', fluentSet
@@ -121,7 +137,7 @@ def activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=Fals
 				finalState = state
 				print "Final state is subset of state: ", state
 				break 
-	if initState != None and finalState != None and printTrajectory:
+	if initState != None and finalState != None and verbose:
 		for state, fluentSet in states.iteritems():
 			if state == initState: 
 				print "State:", state, '-->', [i for i in fluentSet]
@@ -149,69 +165,99 @@ def activity_recog_by_fluents(answerSet, initSet, finalSet, printTrajectory=Fals
 		print "and terminated at state {}.".format(finalState)
 		return RECOGNIZED
 
-def actRec(session, initState=[], finalState=[], actionList=[],  printTrajectory=True, printAllStates=True, printAllActions=True): 
+def actRec(session, initState=[], finalState=[], actionList=[], 
+			verbose=True, method='both', orderedActivity=True): 
+	if method not in ('both', 'by_fluent', 'by_action'):
+		print "Error!, specify a valid method: ('both', 'by_fluent', 'by_action')"
+		return 
 	session = session
 	cnt_recognized = 0
  	cnt_uncomplete = 0
  	cnt_notrecognized = 0 
  	cnt_recognized_by_action_list = 0
  	cnt_notrecognized_by_action_list = 0
- 	if actionList: 
- 		for i, j in actionList.iteritems(): 
- 			print i, j
-
+ 	cnt_uncomplete_by_action_list = 0 
+ 	# if actionList: 
+ 	# 	for i, j in actionList.iteritems(): 
+ 	# 		print i, j
+ 	
  	for i, answerSet in get_answers(session):
  		print "Recognizing activity for answer:", i
- 		status = activity_recog_by_fluents(answerSet, initState, finalState, printTrajectory, printAllStates)
- 		if status == RECOGNIZED: 
- 			cnt_recognized += 1
- 		elif status == NOTRECOGNIZED: 
- 			cnt_notrecognized += 1
- 		else: 
- 			cnt_uncomplete += 1 
- 		status = activity_recog_by_actions(answerSet, actionList, printTrajectory, printAllActions)
- 		if status == RECOGNIZED: 
- 			cnt_recognized_by_action_list += 1 
- 		else:
- 			cnt_notrecognized_by_action_list += 1
+ 		if method != 'by_action':
+	 		status = activity_recog_by_fluents(answerSet, initState, finalState, verbose=verbose)
+	 		if status == RECOGNIZED: 
+	 			cnt_recognized += 1
+	 		elif status == NOTRECOGNIZED: 
+	 			cnt_notrecognized += 1
+	 		else: 
+	 			cnt_uncomplete += 1 
+	 	if method != 'by_fluent':
+	 		status = activity_recog_by_actions(answerSet, actionList, verbose=verbose, ordered=orderedActivity)
+	 		if status == RECOGNIZED: 
+	 			cnt_recognized_by_action_list += 1
+	 		elif status == NOTRECOGNIZED: 
+	 			cnt_notrecognized_by_action_list += 1
+	 		else:
+	 			cnt_uncomplete_by_action_list += 1
+	 			
  		print '*' * 60 
+ 	if cnt_recognized == 0:
+ 		prob_f = 0
+ 	else:
+ 		prob_f = (cnt_recognized / (cnt_recognized+cnt_notrecognized+cnt_uncomplete))
+ 	
+ 	if cnt_recognized_by_action_list == 0:
+ 		prob_a = 0
+	else:
+		prob_a = (cnt_recognized_by_action_list/(cnt_recognized_by_action_list+cnt_notrecognized_by_action_list + cnt_uncomplete_by_action_list))
+
  	print "Summary: "
- 	print "By fluents: "
- 	print "\tTotal recognized activities: ", cnt_recognized
- 	print "\tTotal uncomplete activities: ", cnt_uncomplete
- 	print "\tTotal not recognized trajectories: ", cnt_notrecognized
- 	print "\tActivity performed with the probability of:  ", (cnt_recognized / (cnt_recognized+cnt_notrecognized+cnt_uncomplete))
- 	print "By action set: "
- 	print "\tTotal recognized activities: ", cnt_recognized_by_action_list
- 	print "\tTotal uncomplete activities: ", cnt_notrecognized_by_action_list
- 	print "\tActivity performed with the probability of:  ", (cnt_recognized_by_action_list/(cnt_recognized_by_action_list+cnt_notrecognized_by_action_list))
+ 	if method != 'by_action': 
+	 	print "By fluents: "
+	 	print "\tTotal recognized activities: ", cnt_recognized
+	 	print "\tTotal uncomplete activities: ", cnt_uncomplete
+	 	print "\tTotal not recognized trajectories: ", cnt_notrecognized
+	 	print "\tActivity performed with the probability of:  ", prob_f
+ 	if method != 'by_fluent':
+	 	print "By action set: "
+	 	print "\tTotal recognized activities: ", cnt_recognized_by_action_list
+	 	print "\tTotal uncomplete activities: ", cnt_uncomplete_by_action_list
+	 	print "\tTotal unrecognized activities: ", cnt_notrecognized_by_action_list
+	 	print "\tActivity performed with the probability of:  ", prob_a 
 
 if __name__ == "__main__": 
 
 	
- 	# inint state: [neg(coffe_m_is_on), coffe_m_has_powder, coffe_m_has_water]
-	# final state: [neg(coffe_m_is_jug_removed), coffe_m_has_old_coffe_powder ]
+ 	# actionWorld = { 0: set(['hold_cup_action']), 
+ 	# 				2 : set(['cup_to_mouth']), 
+ 	# 				1 : set(['cup_near_mouth']), 
+ 	# 				3 : set(['cup_from_mouth']) 
+ 	# 				}
 
-	initSet = set([ 'coffe_m_has_powder', 'coffe_m_has_water'])
- 	finalSet = set(['neg(coffe_m_is_jug_removed)', 'coffe_m_has_old_coffe_powder' ])
+ 	actionList = ['hold_cup_action', 'cup_to_mouth', 'cup_near_mouth', 'cup_from_mouth']
+
+ 	from controller import connect 
+
+	def DBSession(): 
+		session = connect('drinking.db')
+		return session()
+
+	# session = DBSession() 
+	# add_action(session, 'Carrying')
+	# add_action(session, 'FlippingPaper')
+	# observation_log = 'recognitionResults.txt'
+	# add_action_observation_from_file(session, observation_log)
+
+
+	session = DBSession() 
+	actRec(session, actionList=actionList, method='by_action', verbose=True)
+
+	# activity_recog_by_actions('answerSet', actionList, verbose=True)
  	
- 	actionList = { 0: set(['coffe_m_add_water']), 
- 					2 : set(['coffe_m_remove_jug']), 
- 					1 : set(['coffe_m_add_jug']), 
- 					3 : set(['coffe_m_activate']), 
- 					4 : set(['coffe_m_add_coffe_powder']), 
- 					5 : set(['coffe_m_activate'])}
- 	
- 	actRec(initSet, finalSet, actionList)
+	# action = 'cup_near_mouth'
 
- 	############################################################
- 	# initSet = set(['heat_on', 'vessel_on_heat', 'vessel_water_full', 'neg(pasta_cooked)', 'neg(vessel_pasta_full)']) #
- 	# finalSet = set(['pasta_ready']) #, 'neg(heat_on)', 'neg(vessel_water_full)', 'neg(vessel_has_boiled_water)'
+	# aset = set([action])
+	# print aset.issubset(actionList)
 
- 	# actionList = { 0: set(['vessel_water_boil']), 
- 	# 				2 : set(['pasta_boil']), 
- 	# 				1 : set(['pasta_cooked_drain']), 
- 	# 				3 : set(['pasta_sauce_add'])}
- 					
- 	# actRec(initSet, finalSet, actionList)
- 	############################################################
+
+	

@@ -1,10 +1,13 @@
-import pickle, re
+import pickle, re, json
 from sqlalchemy import create_engine 
 from sqlalchemy.orm import sessionmaker 
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime, timedelta 
+
 
 from models import * #Base, Fluent, Action 
 
+decapital = lambda s: s[:1].lower() + s[1:] if s else ''
 
 def connect(dbname): 
 	# dbname = 'models.py'
@@ -235,17 +238,20 @@ def add_default_rule(session, fluent, value):
 	kwargs['value'] = value 
 	add_rule(session, r_type='default', **kwargs)
 
-def add_fluent_observation(session, fluent, at_time):
+def add_fluent_observation(session, fluent, at_time, value=True):
 	session = session
 	assert_fluent_defined(session, fluent)
 	
+	if not value: 
+		fluent = 'neg(' + fluent + ')'
 	# add rule
 	kwargs = {}
 	kwargs['fluent'] = fluent
 	kwargs['time'] = at_time  
 	add_rule(session, r_type='fluentobservation', **kwargs)
 
-def add_action_query(session, action, at_time):
+
+def add_action_observation(session, action, at_time):
 	session = session
 	assert_action_defined(session, action)
 	
@@ -254,6 +260,30 @@ def add_action_query(session, action, at_time):
 	kwargs['action'] = action
 	kwargs['time'] = at_time  
 	add_rule(session, r_type='actionquery', **kwargs)
+
+
+def add_action_observation_from_file(session, fileName, samplingRatio=2):
+    if samplingRatio < 1 or samplingRatio > 60: 
+        samplingRatio = 2
+    at_time = 0 
+    session = session
+    prev_observstion = None
+    with open(fileName, 'r') as f_data:          
+        for line in f_data:  
+            try: 
+                data = json.loads(line) 
+                observation = decapital(data['getsure'])
+                g_time = datetime.strptime(data['time'], '%m/%d/%Y %H:%M:%S %p') 
+
+                if observation != prev_observstion: 
+                	add_action_observation(session, observation, at_time)
+                	at_time += 1 
+                prev_observstion = observation
+
+            except Exception, e:
+                print e 
+                pass   
+    f_data.close()
 
 def remove_rule(session, table, row_id): 
 	session = session
@@ -501,7 +531,7 @@ if __name__ == "__main__":
 
 	# 3) To add new rules, we use following functions. #####################################
 
-	# add_action_query('coffe_m_add_coffe_powder', 2)
+	# add_action_observation('coffe_m_add_coffe_powder', 2)
 	# add_fluent_observation('coffe_m_is_jug_removed', 4)
 	add_default_rule(session, 'coffe_m_is_jug_removed', True)
 	# add_nonconcurrency_rule(['coffe_m_remove_coffe_powder', 'coffe_m_add_water'])

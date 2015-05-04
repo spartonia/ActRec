@@ -8,7 +8,9 @@ SATISFIABLE = 1
 UNSATISFIABLE = -1
 UNKNOWN = 0 
 aspParser = 'clingo.exe' 
-
+GROUNDER = 'gringo.exe'
+SOLVER = 'clasp.exe' 
+MAX_ANSWERS = 120 # max number of answers to get from solver.
 
 # detect system and architecture
 # run subprocess to compile input file
@@ -69,10 +71,15 @@ def get_answers(session):
     
     # Creata ASP program and feed it to ASP-solver
     ASPScript = make_asp_script(session)
+    # print ASPScript
     tmp = tempfile.NamedTemporaryFile( delete=False) #mode='w+b',
     tmp.write(ASPScript)
     tmp.seek(0)
-    (result, error) = subprocess.Popen([aspParser, '0'], stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    (result, error) = subprocess.Popen([GROUNDER], stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate() 
+    grounded = tempfile.NamedTemporaryFile(delete=False)
+    grounded.write(result)
+    grounded.seek(0)
+    (result, error) = subprocess.Popen([SOLVER, "%d" %MAX_ANSWERS], stdin=grounded, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     
     # check if ASP is satisfiable
     if check_solution_status(result) != SATISFIABLE: return
